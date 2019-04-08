@@ -11,11 +11,13 @@ public class Main {
 
 abstract class Figure {
     private Position position;
+    private Size maxSize;
     private double positionXRatio;
     private double positionYRatio;
 
     public Figure(Position position, Size windowSize) {
         this.position = position;
+        this.maxSize = new Size(windowSize.width - this.position.x, windowSize.height - this.position.y);
         this.positionXRatio = windowSize.width / position.x;
         this.positionYRatio = windowSize.height / position.y;
     }
@@ -32,6 +34,10 @@ abstract class Figure {
         return position;
     }
 
+    protected Size getMaxSize() {
+        return this.maxSize;
+    }
+
     abstract Size getSize();
 
     abstract void recalculateSize(Size newWindowSize);
@@ -46,6 +52,17 @@ class Circle extends Figure {
 
     public Circle(Position position, Size windowSize, int radius) {
         super(position, windowSize);
+
+        int diameter = radius * 2;
+        if (diameter > getMaxSize().width) {
+            diameter = getMaxSize().width;
+        }
+
+        if (diameter > getMaxSize().height) {
+            diameter = getMaxSize().height;
+        }
+        radius = (diameter / 2) > 0 ? (diameter / 2) : 1;
+
         this.radius = radius;
         this.radiusRatio = windowSize.width / this.radius;
         this.calculateSize();
@@ -56,15 +73,15 @@ class Circle extends Figure {
     }
 
     private void calculateSize() {
-        this.size = new Size(this.radius*2, this.radius*2);
+        this.size = new Size(this.radius * 2, this.radius * 2);
     }
 
-    synchronized void recalculateSize(Size newSize) {
+    void recalculateSize(Size newSize) {
         this.radius = newSize.width / this.radiusRatio;
         this.calculateSize();
     }
 
-    synchronized void render(Graphics graphics) {
+    void render(Graphics graphics) {
         Position position = this.getPosition();
         int diameter = this.radius * 2;
         graphics.setColor(new Color(48, 141, 255));
@@ -95,7 +112,7 @@ class Window extends JFrame {
                 );
                 Figure figure = new Circle(position, this.getWindowSize(), (new Random()).nextInt(100) + 1);
                 this.figures.add(figure);
-                this.repaint(position.x, position.y, figure.getSize().width+1, figure.getSize().height+1);
+                this.repaint(position.x, position.y, figure.getSize().width + 1, figure.getSize().height + 1);
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
@@ -126,6 +143,8 @@ class Window extends JFrame {
 
             figure.render(graphics);
         }
+
+        System.out.println(this.figures.size());
     }
 }
 
