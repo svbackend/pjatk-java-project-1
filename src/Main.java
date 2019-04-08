@@ -22,7 +22,7 @@ abstract class Figure {
         this.positionYRatio = windowSize.height / position.y;
     }
 
-    public synchronized void scale(Size newSize) {
+    public void scale(Size newSize) {
         this.position = new Position(
                 (int) (newSize.width / this.positionXRatio),
                 (int) (newSize.height / this.positionYRatio)
