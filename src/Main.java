@@ -10,39 +10,31 @@ public class Main {
 }
 
 abstract class Figure {
-    private int positionX;
-    private int positionY;
+    private Position position;
     private double positionXRatio;
     private double positionYRatio;
 
-    public Figure(int positionX, int positionY, int currentWindowWidth, int currentWindowHeight) {
-        this.positionX = positionX;
-        this.positionY = positionY;
-        this.positionXRatio = currentWindowWidth / positionX;
-        this.positionYRatio = currentWindowHeight / positionY;
-
-        System.out.println(positionX);
-        System.out.println(this.positionXRatio);
+    public Figure(Position position, Size windowSize) {
+        this.position = position;
+        this.positionXRatio = windowSize.width / position.x;
+        this.positionYRatio = windowSize.height / position.y;
     }
 
-    public void scale(int newWindowWidth, int newWindowHeight) {
-        this.positionX = (int)(newWindowWidth / this.positionXRatio);
-        this.positionY = (int)(newWindowHeight / this.positionYRatio);
-        System.out.println("New pos");
-        System.out.println(this.positionX);
-        System.out.println(this.positionY);
-        this.recalculateSize(newWindowWidth, newWindowHeight);
+    public synchronized void scale(Size newSize) {
+        this.position = new Position(
+                (int) (newSize.width / this.positionXRatio),
+                (int) (newSize.height / this.positionYRatio)
+        );
+        this.recalculateSize(newSize);
     }
 
-    public int getPositionX() {
-        return positionX;
+    public Position getPosition() {
+        return position;
     }
 
-    public int getPositionY() {
-        return positionY;
-    }
+    abstract Size getSize();
 
-    abstract void recalculateSize(int newWindowWidth, int newWindowHeight);
+    abstract void recalculateSize(Size newWindowSize);
 
     abstract void render(Graphics graphics);
 }
@@ -50,27 +42,40 @@ abstract class Figure {
 class Circle extends Figure {
     private int radius;
     private int radiusRatio;
+    private Size size;
 
-    public Circle(int positionX, int positionY, int currentWindowWidth, int currentWindowHeight, int radius) {
-        super(positionX, positionY, currentWindowWidth, currentWindowHeight);
+    public Circle(Position position, Size windowSize, int radius) {
+        super(position, windowSize);
         this.radius = radius;
-        this.radiusRatio = currentWindowWidth / this.radius;
+        this.radiusRatio = windowSize.width / this.radius;
+        this.calculateSize();
     }
 
-    void recalculateSize(int newWindowWidth, int newWindowHeight) {
-        this.radius = newWindowWidth / this.radiusRatio;
+    public Size getSize() {
+        return this.size;
     }
 
-    void render(Graphics graphics) {
-        int diameter = this.radius*2;
+    private void calculateSize() {
+        this.size = new Size(this.radius*2, this.radius*2);
+    }
+
+    synchronized void recalculateSize(Size newSize) {
+        this.radius = newSize.width / this.radiusRatio;
+        this.calculateSize();
+    }
+
+    synchronized void render(Graphics graphics) {
+        Position position = this.getPosition();
+        int diameter = this.radius * 2;
         graphics.setColor(new Color(48, 141, 255));
-        graphics.drawOval(getPositionX(), getPositionY(), diameter, diameter);
+        graphics.drawOval(position.x, position.y, diameter, diameter);
     }
 }
 
 class Window extends JFrame {
 
     private ArrayList<Figure> figures;
+    private Size savedSize;
 
     Window() {
         this.setSize(1024, 768);
@@ -80,26 +85,70 @@ class Window extends JFrame {
 
         this.figures = new ArrayList<>();
 
+        this.savedSize = this.getWindowSize();
+
         Thread changeRadius = new Thread(() -> {
             while (true) {
-                this.figures.add(new Circle(200, 200, this.getWidth(), this.getHeight(), (new Random()).nextInt(100)));
+                Position position = new Position(
+                        (new Random()).nextInt(this.getWidth()) + 1,
+                        (new Random()).nextInt(this.getHeight()) + 1
+                );
+                Figure figure = new Circle(position, this.getWindowSize(), (new Random()).nextInt(100) + 1);
+                this.figures.add(figure);
+                this.repaint(position.x, position.y, figure.getSize().width+1, figure.getSize().height+1);
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                this.repaint();
             }
         });
 
         changeRadius.start();
     }
 
+    public Size getWindowSize() {
+        return new Size(this.getWidth(), this.getHeight());
+    }
+
     public void paint(Graphics graphics) {
-        graphics.clearRect(0, 0, getWidth(), getHeight());
-        for (Figure figure: this.figures) {
-            figure.scale(getWidth(), getHeight());
+        super.paint(graphics);
+        Size currentSize = this.getWindowSize();
+        boolean needToScale = false;
+        if (!savedSize.equals(currentSize)) {
+            needToScale = true;
+        }
+
+        for (Figure figure : this.figures) {
+            if (needToScale) {
+                figure.scale(currentSize);
+            }
+
             figure.render(graphics);
         }
+    }
+}
+
+class Position {
+    final int x;
+    final int y;
+
+    public Position(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+}
+
+class Size {
+    final int width;
+    final int height;
+
+    public Size(int width, int height) {
+        this.width = width;
+        this.height = height;
+    }
+
+    public boolean equals(Size windowSize) {
+        return this.width == windowSize.width && this.height == windowSize.height;
     }
 }
