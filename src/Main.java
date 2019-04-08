@@ -64,7 +64,13 @@ class Circle extends Figure {
         radius = (diameter / 2) > 0 ? (diameter / 2) : 1;
 
         this.radius = radius;
-        this.radiusRatio = windowSize.width / this.radius;
+
+        if (windowSize.width < windowSize.height) {
+            this.radiusRatio = (windowSize.width) / this.radius;
+        } else {
+            this.radiusRatio = (windowSize.height) / this.radius;
+        }
+
         this.calculateSize();
     }
 
@@ -76,8 +82,13 @@ class Circle extends Figure {
         this.size = new Size(this.radius * 2, this.radius * 2);
     }
 
-    void recalculateSize(Size newSize) {
-        this.radius = newSize.width / this.radiusRatio;
+    void recalculateSize(Size newWindowSize) {
+        if (newWindowSize.width < newWindowSize.height) {
+            this.radius = (newWindowSize.width) / this.radiusRatio;
+        } else {
+            this.radius = (newWindowSize.height) / this.radiusRatio;
+        }
+        
         this.calculateSize();
     }
 
