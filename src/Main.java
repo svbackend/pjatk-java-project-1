@@ -40,6 +40,8 @@ abstract class Figure {
 
     abstract Size getSize();
 
+    abstract Color getColor();
+
     abstract void recalculateSize(Size newWindowSize);
 
     abstract void render(Graphics graphics);
@@ -49,6 +51,7 @@ class Circle extends Figure {
     private int radius;
     private int radiusRatio;
     private Size size;
+    private Color color;
 
     public Circle(Position position, Size windowSize, int radius) {
         super(position, windowSize);
@@ -71,6 +74,8 @@ class Circle extends Figure {
             this.radiusRatio = (windowSize.height) / this.radius;
         }
 
+        Random random = new Random();
+        this.color = new Color(random.nextInt(255), random.nextInt(255), random.nextInt(255));
         this.calculateSize();
     }
 
@@ -88,14 +93,18 @@ class Circle extends Figure {
         } else {
             this.radius = (newWindowSize.height) / this.radiusRatio;
         }
-        
+
         this.calculateSize();
+    }
+
+    public Color getColor() {
+        return color;
     }
 
     void render(Graphics graphics) {
         Position position = this.getPosition();
         int diameter = this.radius * 2;
-        graphics.setColor(new Color(48, 141, 255));
+        graphics.setColor(this.getColor());
         graphics.drawOval(position.x, position.y, diameter, diameter);
     }
 }
