@@ -1,15 +1,45 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.Random;
 
 public class Main {
     public static void main(String[] args) {
-        Window window = new Window();
+
+        SwingUtilities.invokeLater(() -> {
+            Window window = new Window();
+
+            window.addComponentListener(new ComponentAdapter() {
+                public void componentResized(ComponentEvent e) {
+                    window.scaleFigures();
+                }
+            });
+
+            Thread addFigures = new Thread(() -> {
+                Random random = new Random();
+                while (true) {
+                    Position position = new Position(
+                            random.nextInt(window.getWidth()) + 1,
+                            random.nextInt(window.getHeight()) + 1
+                    );
+                    Figure figure = new Circle(position, window.getWindowSize(), random.nextInt(100) + 1);
+                    window.addFigure(figure);
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+            addFigures.start();
+        });
     }
 }
 
-abstract class Figure {
+abstract class Figure extends JComponent {
     private Position position;
     private Size maxSize;
     private double positionXRatio;
@@ -18,8 +48,8 @@ abstract class Figure {
     public Figure(Position position, Size windowSize) {
         this.position = position;
         this.maxSize = new Size(windowSize.width - this.position.x, windowSize.height - this.position.y);
-        this.positionXRatio = windowSize.width / position.x;
-        this.positionYRatio = windowSize.height / position.y;
+        this.positionXRatio = (double)windowSize.width / position.x;
+        this.positionYRatio = (double)windowSize.height / position.y;
     }
 
     public void scale(Size newSize) {
@@ -38,18 +68,18 @@ abstract class Figure {
         return this.maxSize;
     }
 
-    abstract Size getSize();
+    abstract Size getFigureSize();
 
     abstract Color getColor();
 
     abstract void recalculateSize(Size newWindowSize);
 
-    abstract void render(Graphics graphics);
+    //abstract void render(Graphics graphics);
 }
 
 class Circle extends Figure {
     private int radius;
-    private int radiusRatio;
+    private double radiusRatio;
     private Size size;
     private Color color;
 
@@ -69,9 +99,9 @@ class Circle extends Figure {
         this.radius = radius;
 
         if (windowSize.width < windowSize.height) {
-            this.radiusRatio = (windowSize.width) / this.radius;
+            this.radiusRatio = (double)windowSize.width / this.radius;
         } else {
-            this.radiusRatio = (windowSize.height) / this.radius;
+            this.radiusRatio = (double)windowSize.height / this.radius;
         }
 
         Random random = new Random();
@@ -79,7 +109,7 @@ class Circle extends Figure {
         this.calculateSize();
     }
 
-    public Size getSize() {
+    public Size getFigureSize() {
         return this.size;
     }
 
@@ -89,9 +119,9 @@ class Circle extends Figure {
 
     void recalculateSize(Size newWindowSize) {
         if (newWindowSize.width < newWindowSize.height) {
-            this.radius = (newWindowSize.width) / this.radiusRatio;
+            this.radius = (int)(newWindowSize.width / this.radiusRatio);
         } else {
-            this.radius = (newWindowSize.height) / this.radiusRatio;
+            this.radius = (int)(newWindowSize.height / this.radiusRatio);
         }
 
         this.calculateSize();
@@ -101,18 +131,19 @@ class Circle extends Figure {
         return color;
     }
 
-    void render(Graphics graphics) {
+    public void paint(Graphics graphics) {
+        super.paint(graphics);
+
         Position position = this.getPosition();
         int diameter = this.radius * 2;
         graphics.setColor(this.getColor());
-        graphics.drawOval(position.x, position.y, diameter, diameter);
+        graphics.fillOval(position.x, position.y, diameter, diameter);
     }
 }
 
 class Window extends JFrame {
 
     private ArrayList<Figure> figures;
-    private Size savedSize;
 
     Window() {
         this.setSize(1024, 768);
@@ -121,50 +152,33 @@ class Window extends JFrame {
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         this.figures = new ArrayList<>();
+    }
 
-        this.savedSize = this.getWindowSize();
-
-        Thread changeRadius = new Thread(() -> {
-            while (true) {
-                Position position = new Position(
-                        (new Random()).nextInt(this.getWidth()) + 1,
-                        (new Random()).nextInt(this.getHeight()) + 1
-                );
-                Figure figure = new Circle(position, this.getWindowSize(), (new Random()).nextInt(100) + 1);
-                this.figures.add(figure);
-                this.repaint(position.x, position.y, figure.getSize().width + 1, figure.getSize().height + 1);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        changeRadius.start();
+    public synchronized void addFigure(Figure figure) {
+        this.figures.add(figure);
+        this.add(figure);
+        SwingUtilities.invokeLater(this::repaint);
     }
 
     public Size getWindowSize() {
         return new Size(this.getWidth(), this.getHeight());
     }
 
-    public void paint(Graphics graphics) {
-        super.paint(graphics);
-        Size currentSize = this.getWindowSize();
-        boolean needToScale = false;
-        if (!savedSize.equals(currentSize)) {
-            needToScale = true;
+    public synchronized void scaleFigures() {
+        for (Figure figure : this.figures) {
+            figure.scale(new Size(this.getWidth(), this.getHeight()));
         }
+    }
+
+
+    public synchronized void paint(Graphics graphics) {
+        //graphics.clearRect(0, 0, this.getWidth(), this.getHeight());
+        super.paint(graphics);
 
         for (Figure figure : this.figures) {
-            if (needToScale) {
-                figure.scale(currentSize);
-            }
-
-            figure.render(graphics);
+            figure.paint(graphics);
         }
 
-        System.out.println(this.figures.size());
     }
 }
 
@@ -175,6 +189,13 @@ class Position {
     public Position(int x, int y) {
         this.x = x;
         this.y = y;
+    }
+
+    public String toString() {
+        return "Position{" +
+                "x=" + x +
+                ", y=" + y +
+                '}';
     }
 }
 
@@ -189,5 +210,9 @@ class Size {
 
     public boolean equals(Size windowSize) {
         return this.width == windowSize.width && this.height == windowSize.height;
+    }
+
+    public String toString() {
+        return width + "x" + height;
     }
 }
