@@ -17,14 +17,10 @@ public class Main {
                 }
             });
 
-            Thread addFigures = new Thread(() -> {
-                Random random = new Random();
+            Thread addFiguresThread = new Thread(() -> {
+                FigureFactory figureFactory = new FigureFactory();
                 while (true) {
-                    Position position = new Position(
-                            random.nextInt(window.getWidth()) + 1,
-                            random.nextInt(window.getHeight()) + 1
-                    );
-                    Figure figure = new Circle(position, window.getWindowSize(), random.nextInt(100) + 1);
+                    Figure figure = figureFactory.createRandomFigure(window.getWindowSize());
                     window.addFigure(figure);
                     try {
                         Thread.sleep(1000);
@@ -34,8 +30,27 @@ public class Main {
                 }
             });
 
-            addFigures.start();
+            addFiguresThread.start();
         });
+    }
+}
+
+class FigureFactory {
+    private Random random;
+
+    FigureFactory() {
+        this.random = new Random();
+    }
+
+    public Figure createRandomFigure(Size windowSize) {
+        Position position = new Position(
+                this.random.nextInt(windowSize.width) + 1,
+                this.random.nextInt(windowSize.height) + 1
+        );
+
+        Figure figure = new Circle(position, windowSize, random.nextInt(100) + 1);
+
+        return  figure;
     }
 }
 
