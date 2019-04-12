@@ -44,8 +44,8 @@ class FigureFactory {
 
     public Figure createRandomFigure(Size windowSize) {
         Position position = new Position(
-                this.random.nextInt(windowSize.width) + 1,
-                this.random.nextInt(windowSize.height) + 1
+                this.random.nextInt(windowSize.width-1) + 1,
+                this.random.nextInt(windowSize.height-1) + 1
         );
 
         Figure figure = new Circle(position, windowSize, random.nextInt(100) + 1);
@@ -154,6 +154,17 @@ class Circle extends Figure {
         graphics.setColor(this.getColor());
         graphics.fillOval(position.x, position.y, diameter, diameter);
     }
+
+    @Override
+    public String toString() {
+        return "Circle{" +
+                "position=" + getPosition() +
+                "radius=" + radius +
+                ", radiusRatio=" + radiusRatio +
+                ", size=" + size +
+                ", color=" + color +
+                '}';
+    }
 }
 
 class Window extends JFrame {
@@ -172,7 +183,7 @@ class Window extends JFrame {
     public synchronized void addFigure(Figure figure) {
         this.figures.add(figure);
         this.add(figure);
-        SwingUtilities.invokeLater(this::repaint);
+        this.repaint();
     }
 
     public Size getWindowSize() {
@@ -187,13 +198,17 @@ class Window extends JFrame {
 
 
     public synchronized void paint(Graphics graphics) {
-        //graphics.clearRect(0, 0, this.getWidth(), this.getHeight());
-        super.paint(graphics);
+        graphics.clearRect(0, 0, this.getWidth(), this.getHeight());
+        //super.paint(graphics);
+
+        System.out.println("--START--");
 
         for (Figure figure : this.figures) {
             figure.paint(graphics);
+            System.out.println(figure);
         }
 
+        System.out.println("--END--");
     }
 }
 
