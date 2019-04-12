@@ -50,7 +50,7 @@ class FigureFactory {
 
         Figure figure = new Circle(position, windowSize, random.nextInt(100) + 1);
 
-        return  figure;
+        return figure;
     }
 }
 
@@ -67,12 +67,13 @@ abstract class Figure extends JComponent {
         this.positionYRatio = (double)windowSize.height / position.y;
     }
 
-    public void scale(Size newSize) {
+    public void scale(Size newWindowSize) {
         this.position = new Position(
-                (int) (newSize.width / this.positionXRatio),
-                (int) (newSize.height / this.positionYRatio)
+                (int) (newWindowSize.width / this.positionXRatio),
+                (int) (newWindowSize.height / this.positionYRatio)
         );
-        this.recalculateSize(newSize);
+        this.maxSize = new Size(newWindowSize.width - this.position.x, newWindowSize.height - this.position.y);
+        this.recalculateSize(newWindowSize);
     }
 
     public Position getPosition() {
@@ -83,35 +84,18 @@ abstract class Figure extends JComponent {
         return this.maxSize;
     }
 
-    abstract Size getFigureSize();
-
-    abstract Color getColor();
-
     abstract void recalculateSize(Size newWindowSize);
-
-    //abstract void render(Graphics graphics);
 }
 
 class Circle extends Figure {
     private int radius;
     private double radiusRatio;
-    private Size size;
     private Color color;
 
     public Circle(Position position, Size windowSize, int radius) {
         super(position, windowSize);
 
-        int diameter = radius * 2;
-        if (diameter > getMaxSize().width) {
-            diameter = getMaxSize().width;
-        }
-
-        if (diameter > getMaxSize().height) {
-            diameter = getMaxSize().height;
-        }
-        radius = (diameter / 2) > 0 ? (diameter / 2) : 1;
-
-        this.radius = radius;
+        this.setRadius(radius);
 
         if (windowSize.width < windowSize.height) {
             this.radiusRatio = (double)windowSize.width / this.radius;
@@ -121,37 +105,36 @@ class Circle extends Figure {
 
         Random random = new Random();
         this.color = new Color(random.nextInt(255), random.nextInt(255), random.nextInt(255));
-        this.calculateSize();
     }
 
-    public Size getFigureSize() {
-        return this.size;
-    }
+    private void setRadius(int radius) {
+        int diameter = radius * 2;
+        if (diameter > getMaxSize().width) {
+            diameter = getMaxSize().width;
+        }
 
-    private void calculateSize() {
-        this.size = new Size(this.radius * 2, this.radius * 2);
+        if (diameter > getMaxSize().height) {
+            diameter = getMaxSize().height;
+        }
+
+        this.radius = (diameter / 2) > 0 ? (diameter / 2) : 1;
     }
 
     void recalculateSize(Size newWindowSize) {
+        int radius;
         if (newWindowSize.width < newWindowSize.height) {
-            this.radius = (int)(newWindowSize.width / this.radiusRatio);
+            radius = (int)(newWindowSize.width / this.radiusRatio);
         } else {
-            this.radius = (int)(newWindowSize.height / this.radiusRatio);
+            radius = (int)(newWindowSize.height / this.radiusRatio);
         }
 
-        this.calculateSize();
-    }
-
-    public Color getColor() {
-        return color;
+        this.setRadius(radius);
     }
 
     public void paint(Graphics graphics) {
-        super.paint(graphics);
-
         Position position = this.getPosition();
         int diameter = this.radius * 2;
-        graphics.setColor(this.getColor());
+        graphics.setColor(this.color);
         graphics.fillOval(position.x, position.y, diameter, diameter);
     }
 
@@ -161,7 +144,6 @@ class Circle extends Figure {
                 "position=" + getPosition() +
                 "radius=" + radius +
                 ", radiusRatio=" + radiusRatio +
-                ", size=" + size +
                 ", color=" + color +
                 '}';
     }
@@ -236,10 +218,6 @@ class Size {
     public Size(int width, int height) {
         this.width = width;
         this.height = height;
-    }
-
-    public boolean equals(Size windowSize) {
-        return this.width == windowSize.width && this.height == windowSize.height;
     }
 
     public String toString() {
