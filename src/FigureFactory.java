@@ -1,3 +1,5 @@
+import java.awt.*;
+import java.security.InvalidParameterException;
 import java.util.Random;
 
 class FigureFactory {
@@ -24,6 +26,33 @@ class FigureFactory {
             default:
                 figure = new Square(position, windowSize, random.nextInt(100) + 1);
                 break;
+        }
+
+        return figure;
+    }
+
+    static Figure importFigureFromString(String exportedFigure) {
+        String[] figureData = exportedFigure.split(Figure.EXPORT_DELIMITER);
+
+        Figure figure;
+        Color color;
+        double positionXRatio = Double.valueOf(figureData[1]);
+        double positionYRatio = Double.valueOf(figureData[2]);
+
+        // At 0 index always must be class name
+        switch (figureData[0]) {
+            case "Circle":
+                double radiusRatio = Double.valueOf(figureData[3]);
+                color = new Color(Integer.valueOf(figureData[4]), Integer.valueOf(figureData[5]), Integer.valueOf(figureData[6]));
+                figure = new Circle(positionXRatio, positionYRatio, radiusRatio, color);
+                break;
+            case "Square":
+                double sideLengthRatio = Double.valueOf(figureData[3]);
+                color = new Color(Integer.valueOf(figureData[4]), Integer.valueOf(figureData[5]), Integer.valueOf(figureData[6]));
+                figure = new Square(positionXRatio, positionYRatio, sideLengthRatio, color);
+                break;
+            default:
+                throw new InvalidParameterException("Cannot create Figure from provided string!");
         }
 
         return figure;

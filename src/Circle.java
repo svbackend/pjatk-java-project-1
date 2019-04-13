@@ -21,6 +21,12 @@ class Circle extends Figure {
         this.color = new Color(random.nextInt(255), random.nextInt(255), random.nextInt(255));
     }
 
+    Circle(double positionXRatio, double positionYRatio, double radiusRatio, Color color) {
+        super(positionXRatio, positionYRatio);
+        this.radiusRatio = radiusRatio;
+        this.color = color;
+    }
+
     private void setRadius(int radius) {
         int diameter = radius * 2;
         if (diameter > getMaxSize().width) {
@@ -52,7 +58,6 @@ class Circle extends Figure {
         graphics.fillOval(position.x, position.y, diameter, diameter);
     }
 
-    @Override
     public String toString() {
         return "Circle{" +
                 "position=" + getPosition() +
@@ -60,5 +65,21 @@ class Circle extends Figure {
                 ", radiusRatio=" + radiusRatio +
                 ", color=" + color +
                 '}';
+    }
+
+    public String exportAsString() {
+        String figureName = this.getClass().getSimpleName();
+
+        String[] exportData = {
+                figureName,
+                Double.toString(getPositionXRatio()),
+                Double.toString(getPositionYRatio()),
+                Double.toString(this.radiusRatio),
+                Integer.toString(this.color.getRed()),
+                Integer.toString(this.color.getGreen()),
+                Integer.toString(this.color.getBlue()),
+        };
+
+        return this.generateExportStringFromData(exportData);
     }
 }
