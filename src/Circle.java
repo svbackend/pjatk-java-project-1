@@ -58,15 +58,6 @@ class Circle extends Figure {
         graphics.fillOval(position.x, position.y, diameter, diameter);
     }
 
-    public String toString() {
-        return "Circle{" +
-                "position=" + getPosition() +
-                "radius=" + radius +
-                ", radiusRatio=" + radiusRatio +
-                ", color=" + color +
-                '}';
-    }
-
     public String exportAsString() {
         String figureName = this.getClass().getSimpleName();
 

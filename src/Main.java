@@ -16,7 +16,7 @@ public class Main {
 
             Thread addFiguresThread = new Thread(() -> {
                 FigureFactory figureFactory = new FigureFactory();
-                while (true) {
+                while (window.isAddFiguresThreadRunning) {
                     Figure figure = figureFactory.createRandomFigure(window.getWindowSize());
                     window.addFigure(figure);
                     try {
