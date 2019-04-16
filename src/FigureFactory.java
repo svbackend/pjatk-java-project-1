@@ -16,7 +16,7 @@ class FigureFactory {
         );
 
         Figure figure;
-        switch (this.random.nextInt(2)) {
+        switch (this.random.nextInt(3)) {
             case 0:
                 figure = new Circle(position, windowSize, random.nextInt(100) + 1);
                 break;
@@ -24,7 +24,7 @@ class FigureFactory {
                 figure = new Square(position, windowSize, random.nextInt(100) + 1);
                 break;
             default:
-                figure = new Square(position, windowSize, random.nextInt(100) + 1);
+                figure = new Rectangle(position, windowSize, random.nextInt(100) + 1, random.nextInt(100) + 1);
                 break;
         }
 
@@ -50,6 +50,12 @@ class FigureFactory {
                 double sideLengthRatio = Double.valueOf(figureData[3]);
                 color = new Color(Integer.valueOf(figureData[4]), Integer.valueOf(figureData[5]), Integer.valueOf(figureData[6]));
                 figure = new Square(positionXRatio, positionYRatio, sideLengthRatio, color);
+                break;
+            case "Rectangle":
+                double aSideLengthRatio = Double.valueOf(figureData[3]);
+                double bSideLengthRatio = Double.valueOf(figureData[4]);
+                color = new Color(Integer.valueOf(figureData[5]), Integer.valueOf(figureData[6]), Integer.valueOf(figureData[7]));
+                figure = new Rectangle(positionXRatio, positionYRatio, aSideLengthRatio, bSideLengthRatio, color);
                 break;
             default:
                 throw new InvalidParameterException("Cannot create Figure from provided string!");
